@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "maplewatch": {
+      "command": "uvx",
+      "args": ["maplewatch-mcp"],
+      "env": {
+        "MAPLEWATCH_STACK": "/Users/you/maplewatch/stack.yaml"
+      }
+    }
+  }
+}

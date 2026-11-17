@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "maplewatch-mcp"
+version = "0.1.0"
+description = "Unofficial MCP server that checks Canadian Cyber Centre security advisories against the software you actually run."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "Harsh Kapoor" }]
+keywords = ["mcp", "model-context-protocol", "security", "advisories", "vulnerability", "canada", "cyber-centre"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: System Administrators",
+  "Intended Audience :: Information Technology",
+  "Natural Language :: English",
+  "Natural Language :: French",
+  "Programming Language :: Python :: 3",
+  "Topic :: Security",
+  "Topic :: System :: Monitoring",
+]
+dependencies = [
+  "mcp>=2.3,<3",
+  "httpx>=0.28,<1",
+  "beautifulsoup4>=4.12,<5",
+  "defusedxml>=0.7,<1",
+  "platformdirs>=4,<5",
+  "pyyaml>=6,<7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "anyio>=4", "ruff>=0.6"]
+
+[project.scripts]
+maplewatch-mcp = "maplewatch.server:main"
+
+[project.urls]
+Homepage = "https://github.com/PacketSnifferHK/maplewatch-mcp"
+Issues = "https://github.com/PacketSnifferHK/maplewatch-mcp/issues"
+Security = "https://github.com/PacketSnifferHK/maplewatch-mcp/blob/main/SECURITY.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maplewatch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]
+markers = ["live: talks to cyber.gc.ca (skipped unless MAPLEWATCH_LIVE=1)"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM"]
+ignore = ["S101"]  # assert is fine in tests
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S"]

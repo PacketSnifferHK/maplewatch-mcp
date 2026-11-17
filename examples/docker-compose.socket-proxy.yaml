@@ -1,0 +1,17 @@
+# Let maplewatch see your containers without giving it the Docker socket.
+# The proxy only answers GET /containers and GET /images; POST (start, stop, exec...) is off by default.
+#
+#   docker compose -f docker-compose.socket-proxy.yaml up -d
+#   then run maplewatch with: MAPLEWATCH_DOCKER=1 DOCKER_HOST=tcp://127.0.0.1:2375
+services:
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:v0.6.0
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      IMAGES: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "127.0.0.1:2375:2375"   # localhost only, never on the LAN

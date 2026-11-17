@@ -1,0 +1,21 @@
+# Example inventory. Replace the versions with yours (`docker image inspect`, `pveversion`, app "About" pages).
+# Name is what you call it; aliases help match how vendors write it.
+software:
+  - name: GitLab
+    version: 19.5.5
+  - name: Grafana
+    version: 12.2.0
+  - name: n8n
+    version: 1.120.4
+  - name: Roundcube
+    version: 1.6.14
+    aliases: [Roundcube Webmail]
+  - name: Jellyfin
+    version: 10.11.0
+  - name: Proxmox VE
+    version: 9.1.1
+    aliases: [Proxmox Virtual Environment]
+  - name: OpenSSH
+    version: 9.6p1
+  - name: Forgejo
+    version: latest   # a ':latest' tag can't be compared, so it can only ever be "check"
