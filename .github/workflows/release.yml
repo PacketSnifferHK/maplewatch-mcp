@@ -18,7 +18,8 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.13"
-      - run: uv pip install --system -e ".[dev]"
+          activate-environment: true
+      - run: uv pip install -e ".[dev]"
       - run: pytest -q
       - name: Tag, pyproject.toml and server.json must agree
         run: |
