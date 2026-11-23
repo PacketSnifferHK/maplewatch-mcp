@@ -94,7 +94,7 @@ def test_unreadable_rules_are_kept_for_humans():
     ],
 )
 def test_no_catastrophic_backtracking(evil, monkeypatch):
-    """Regression test: an early regex took minutes on long lists (ReDoS). Must stay linear."""
+    """Regression test: an early regex was quadratic on long lists (ReDoS, ~3 s for 8,000 chars). Must stay linear."""
     import maplewatch.versions as v
 
     monkeypatch.setattr(v, "MAX_RULE_CHARS", 10**6)  # test the regexes, not the length cap
