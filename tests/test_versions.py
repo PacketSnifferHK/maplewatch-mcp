@@ -12,6 +12,13 @@ def rules(*texts: str):
 GITLAB = ("Prior to 19.3.9", "Prior to 19.4.8", "Prior to 19.5.6")
 GRAFANA = ("versions prior to 12.4.2, 12.3.6, 12.2.8, 12.1.10 and 11.6.14",)
 N8N = ("versions prior to 1.123.10 and versions prior to 2.5.0",)
+# AV26-936 (Grafana, 2026-09-18) says "Version 13.0.0 to 13.08"; Grafana's own advisory says 13.0.8.
+GRAFANA_AV26_936 = (
+    "Version 12.3.0 to 12.4.10",
+    "Version 13.0.0 to 13.08",
+    "Version 13.1.0 to 13.1.5",
+    "Version 13.2.0 to 13.2.1",
+)
 # AV26-1200 (n8n, 2026-11-24): eight fixes over five lines, two of them on 2.49 and two on 1.123.
 # 0.1.0 wrongly ruled out 2.45.7 here; found by running maplewatch on a real homelab.
 N8N_AV26_1200 = (
@@ -57,6 +64,10 @@ N8N_AV26_1200 = (
         ("12.0.1", GRAFANA, "affected"),  # 12.0 has no fix of its own: same rule as n8n 2.45.7
         ("11.5.0", GRAFANA, "affected"),
         ("10.0", GRAFANA, "affected"),
+        # a typo in the advisory is "check", never a guessed "affected"
+        ("13.3.0", GRAFANA_AV26_936, "unknown"),
+        ("13.1.2", GRAFANA_AV26_936, "affected"),
+        ("12.5.0", GRAFANA_AV26_936, "unknown"),
         # single bounds and ranges
         ("1.0.0", ("Prior to or equal to 1.0.0",), "affected"),
         ("1.0.1", ("Prior to or equal to 1.0.0",), "not_affected"),

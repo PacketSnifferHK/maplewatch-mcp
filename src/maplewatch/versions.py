@@ -102,12 +102,22 @@ def parse_rule(text: str) -> Rule:
     return rule
 
 
+def _looks_mistyped(lower: str, upper: str) -> bool:
+    """'13.0.0 to 13.08': the end of a range has fewer parts than its start and a leading zero. Almost
+    certainly a typo for 13.0.8, and reading it as 13.8 would mark 13.3.0 as affected. Don't guess."""
+    parts = upper.split(".")
+    return len(parts) < len(lower.split(".")) and any(len(x) > 1 and x.startswith("0") for x in parts)
+
+
 def _parse(raw: str) -> Rule:
     for pattern, kind in _RULES:
         m = pattern.match(raw)
         if not m:
             continue
-        keys = [version_key(g) for g in m.groups() if g]
+        texts = [g for g in m.groups() if g]
+        if kind in ("range", "range_lt") and len(texts) == 2 and _looks_mistyped(*texts):
+            return Rule("unknown", raw)
+        keys = [version_key(g) for g in texts]
         if any(k is None for k in keys):
             return Rule("unknown", raw)
         nums = [k for k in keys if k is not None]

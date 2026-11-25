@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 (2026-11-25)
+
+- Fixed a false "affected": a range whose end looks mistyped (fewer parts than its start and a leading zero,
+  such as "Version 13.0.0 to 13.08" in AV26-936, which Grafana's own advisory gives as 13.0.8) was read as
+  13.8 and marked Grafana 13.3.0 as affected. It is now reported as "check" with the original text.
+  Across the whole archive this changes that one rule and no others.
+
 ## 0.1.1 (2026-11-25)
 
 - **Fixed a missed hit.** When an advisory lists fixes for several release lines, a version on a line with no

@@ -15,7 +15,7 @@ or your running Docker containers. It tells you which ones hit you, which versio
 
 ```text
 $ maplewatch-mcp --report
-maplewatch 0.1.1: 1304 Cyber Centre advisories since 2025-11-17, 8 pieces of software checked
+maplewatch 0.1.2: 1304 Cyber Centre advisories since 2025-11-17, 8 pieces of software checked
 
 AFFECTED AV26-1168  GitLab 19.5.5  (GitLab) 19.5.5 is on the 19.5.x line, fixed in 19.5.6
          https://www.cyber.gc.ca/en/alerts-advisories/gitlab-security-advisory-av26-1168
