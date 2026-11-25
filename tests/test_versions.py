@@ -12,6 +12,18 @@ def rules(*texts: str):
 GITLAB = ("Prior to 19.3.9", "Prior to 19.4.8", "Prior to 19.5.6")
 GRAFANA = ("versions prior to 12.4.2, 12.3.6, 12.2.8, 12.1.10 and 11.6.14",)
 N8N = ("versions prior to 1.123.10 and versions prior to 2.5.0",)
+# AV26-1200 (n8n, 2026-11-24): eight fixes over five lines, two of them on 2.49 and two on 1.123.
+# 0.1.0 wrongly ruled out 2.45.7 here; found by running maplewatch on a real homelab.
+N8N_AV26_1200 = (
+    "Prior to 3.4.0",
+    "Prior to 2.50.0",
+    "Prior to 2.49.5",
+    "Prior to 2.48.8",
+    "Prior to 1.123.101",
+    "Prior to 2.49.4",
+    "Prior to 2.48.7",
+    "Prior to 1.123.100",
+)
 
 
 @pytest.mark.parametrize(
@@ -33,6 +45,18 @@ N8N = ("versions prior to 1.123.10 and versions prior to 2.5.0",)
         ("2.5.0", N8N, "not_affected"),
         ("1.120.4", N8N, "affected"),
         ("1.124.0", N8N, "not_affected"),
+        # several fixes per line, and an older minor with no fix of its own (AV26-1200)
+        ("2.45.7", N8N_AV26_1200, "affected"),
+        ("2.49.4", N8N_AV26_1200, "affected"),
+        ("2.49.5", N8N_AV26_1200, "not_affected"),
+        ("2.48.8", N8N_AV26_1200, "not_affected"),
+        ("1.123.100", N8N_AV26_1200, "affected"),
+        ("1.123.101", N8N_AV26_1200, "not_affected"),
+        ("3.3.9", N8N_AV26_1200, "affected"),
+        ("3.4.0", N8N_AV26_1200, "not_affected"),
+        ("12.0.1", GRAFANA, "affected"),  # 12.0 has no fix of its own: same rule as n8n 2.45.7
+        ("11.5.0", GRAFANA, "affected"),
+        ("10.0", GRAFANA, "affected"),
         # single bounds and ranges
         ("1.0.0", ("Prior to or equal to 1.0.0",), "affected"),
         ("1.0.1", ("Prior to or equal to 1.0.0",), "not_affected"),

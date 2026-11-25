@@ -130,3 +130,29 @@ async def test_data_outage_is_a_clear_tool_error(tmp_path, clock):
     src = CyberCentre(cache_dir=tmp_path, client=make_client(httpx.MockTransport(fake.handler)), clock=clock)
     r = await call(build_server(source=src, inventory=inventory, today=lambda: TODAY), "maplewatch_check_stack")
     assert r.is_error and "unavailable" in str(r.content[0])
+
+
+async def test_nothing_checked_is_never_an_all_clear(make_source):
+    server = build_server(
+        source=make_source(), inventory=lambda: ([], ["docker: connection refused"]), today=lambda: TODAY
+    )
+    data = (await call(server, "maplewatch_check_stack")).structured_content
+    assert data["nothing_checked"] is True
+    assert "NOT an all-clear" in data["summary"]
+    assert data["inventory_problems"] == ["docker: connection refused"]
+
+
+def test_report_exit_codes(make_source):
+    from maplewatch.server import EXIT_AFFECTED, EXIT_CLEAR, EXIT_NOTHING_CHECKED, report
+
+    text, code = report(
+        source=make_source(), inventory=lambda: ([], ["docker: connection refused"]), today=lambda: TODAY
+    )
+    assert code == EXIT_NOTHING_CHECKED and "NOTHING WAS CHECKED" in text and "connection refused" in text
+
+    text, code = report(source=make_source(), inventory=inventory, today=lambda: TODAY)
+    assert code == EXIT_AFFECTED and "AFFECTED AV26-1168" in text
+
+    clean = lambda: ([Software("GitLab", "19.6.0", "stack file")], [])  # noqa: E731
+    text, code = report(source=make_source(), inventory=clean, today=lambda: TODAY)
+    assert code == EXIT_CLEAR and "Nothing in this window affects the 1 pieces of software checked." in text
