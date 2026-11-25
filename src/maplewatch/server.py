@@ -6,6 +6,7 @@ import argparse
 import datetime as dt
 import logging
 import sys
+import textwrap
 from collections.abc import Callable
 from typing import Annotated, Literal
 
@@ -182,6 +183,20 @@ def build_server(
     return server
 
 
+REPORT_WIDTH = 100  # fits a normal terminal window; long text wraps on word boundaries
+
+
+def _wrap(text: str, indent: str = "") -> list[str]:
+    return textwrap.wrap(
+        text,
+        REPORT_WIDTH,
+        initial_indent=indent,
+        subsequent_indent=indent,
+        break_long_words=False,
+        break_on_hyphens=False,
+    ) or [indent]
+
+
 # Exit codes for cron and n8n: 0 = nothing affected, 1 = something affected, 2 = nothing could be checked.
 EXIT_CLEAR, EXIT_AFFECTED, EXIT_NOTHING_CHECKED = 0, 1, 2
 
@@ -211,23 +226,26 @@ def report(
     findings, ruled_out = check(items, window)
     lines = [
         f"maplewatch {__version__}: {len(window)} Cyber Centre advisories since {since}, "
-        f"{len(items)} pieces of software checked",
+        f"{len(items)} {'piece' if len(items) == 1 else 'pieces'} of software checked",
         "",
     ]
-    lines += [f"problem: {p}" for p in problems]  # e.g. Docker unreachable: shown first, not buried
+    for p in problems:  # e.g. Docker unreachable: shown first, not buried
+        lines += _wrap(f"problem: {p}")
     if problems:
         lines.append("")
     for f in findings:
         mark = "AFFECTED" if f.status == "affected" else "CHECK   "
         lines.append(
-            f"{mark} {f.advisory.serial:<10} {f.software.name} {f.software.version or '?'}  "
-            f"({f.product.name}) {f.reason}\n         {f.advisory.url}"
+            f"{mark} {f.advisory.serial:<10} {f.software.name} {f.software.version or '?'}  ({f.product.name})"
         )
+        lines += _wrap(f.reason, " " * 9)
+        lines.append(f"         {f.advisory.url}")
     if not findings:
         lines.append(f"Nothing in this window affects the {len(items)} pieces of software checked.")
     lines += ["", f"{ruled_out} name matches ruled out by version."]
-    lines += [f"warning: {w}" for w in src.warnings]
-    lines += ["", ATTRIBUTION]
+    for w in src.warnings:
+        lines += _wrap(f"warning: {w}")
+    lines += ["", *_wrap(ATTRIBUTION)]
     code = EXIT_AFFECTED if any(f.status == "affected" for f in findings) else EXIT_CLEAR
     return "\n".join(lines), code
 

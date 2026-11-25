@@ -168,14 +168,32 @@ def _common(a: Version, b: Version) -> int:
     return n
 
 
-def _release_lines(uppers: list[Version]) -> list[Version]:
-    """The release line each fix belongs to: as much of the version as needed to tell the fixes apart.
-    {19.3.9, 19.4.8, 19.5.6} -> 19.3 / 19.4 / 19.5;   {1.123.10, 2.5.0} -> 1 / 2."""
-    out = []
-    for i, u in enumerate(uppers):
-        shared = max((_common(u, o) for j, o in enumerate(uppers) if j != i), default=0)
-        out.append(u[: min(shared + 1, len(u))])
-    return out
+def _fmt(v: Version) -> str:
+    return ".".join(map(str, v))
+
+
+def _release_line_verdict(installed: str | None, v: Version, uppers: list[Version]) -> tuple[Verdict, str]:
+    """Several "prior to" fixes = maintained release lines (GitLab: 19.3.9 / 19.4.8 / 19.5.6).
+
+    Compare with the fixes that share the most of your version, up to major.minor:
+      * same major.minor  -> the newest fix on that line (two fixes on one line: the later one wins)
+      * same major only   -> your minor has no fix of its own: affected unless newer than every fix in your major
+      * no shared major   -> affected unless newer than every fix
+    The newest fix is used because an advisory can bundle several issues fixed in different patches.
+    """
+    depth = min(2, max(_common(v, u) for u in uppers))
+    same = [u for u in uppers if _common(v, u) >= depth]
+    top = max(same, key=lambda u: u + (0,) * (8 - len(u)))
+    line = _fmt(v[:depth]) + ".x" if depth else ""
+    if _cmp(v, top) < 0:
+        if depth == 2:
+            return "affected", f"{installed} is on the {line} line, fixed in {_fmt(top)}"
+        if depth == 1:
+            return "affected", f"{installed}: no fix for its release line; the {line} fixes go up to {_fmt(top)}"
+        return "affected", f"{installed} is older than the fixed releases (newest fix {_fmt(top)})"
+    if depth == 2:
+        return "not_affected", f"{installed} already has the {line} fix ({_fmt(top)})"
+    return "not_affected", f"{installed} is newer than every listed fix for its release line ({_fmt(top)})"
 
 
 def evaluate(installed: str | None, rules: list[Rule]) -> tuple[Verdict, str]:
@@ -197,17 +215,12 @@ def evaluate(installed: str | None, rules: list[Rule]) -> tuple[Verdict, str]:
 
     lines = [r for r in readable if r.kind == "lt" and r.branch is None and r.upper is not None]
     if len(lines) > 1:
-        for r, line in zip(lines, _release_lines([r.upper for r in lines if r.upper]), strict=True):
-            assert r.upper is not None
-            if _on_line(v, line):
-                label = ".".join(map(str, line)) + ".x"
-                if _cmp(v, r.upper) < 0:
-                    return "affected", f"{installed} is on the {label} line, fixed in {'.'.join(map(str, r.upper))}"
-                return "not_affected", f"{installed} already has the {label} fix ({'.'.join(map(str, r.upper))})"
-        lowest = min((r.upper for r in lines if r.upper), key=lambda u: u + (0,) * 8)
-        if _cmp(v, lowest) < 0:
-            return "affected", f"{installed} is older than every fixed release line ({lines[0].raw!r})"
+        verdict = _release_line_verdict(installed, v, [r.upper for r in lines if r.upper])
+        if verdict[0] == "affected":
+            return verdict
         readable = [r for r in readable if r not in lines]
+        if not readable and not unreadable:
+            return verdict
 
     for r in readable:
         if r.fuzzy and any(_on_line(v, b) for b in r.bounds()):

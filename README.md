@@ -35,7 +35,8 @@ CHECK    AV26-584   n8n 1.120.4  (n8n (Credential Exfiltration)) ... these aren'
   own advisories page uses, plus the Atom feed for anything published in the last few minutes. Both English and French.
 - **Understands how advisories describe versions.** "Prior to 19.5.6", "versions 0.123.0 to versions prior
   to 1.121.3", "15.x versions prior to 15.2.3", "Versions antérieures à la version 3.1.2, 3.0.9 et 2.9.14", and
-  maintained release lines: GitLab 19.4.7 is checked against the 19.4 fix, not the 19.5 one.
+  maintained release lines: GitLab 19.4.7 is checked against the 19.4 fix, not the 19.5 one, and a release
+  line with no fix of its own (usually end-of-life) counts as affected.
 - **Never guesses.** When the advisory says "multiple versions", when a vendor uses its own scheme
   (`22.7R2.5`), or when your image is `:latest`, the answer is **check**, with the reason. It doesn't
   invent a yes or a no.
