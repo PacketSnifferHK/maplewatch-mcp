@@ -4,7 +4,7 @@ Unofficial. Not affiliated with or endorsed by the Canadian Centre for Cyber Sec
 the Communications Security Establishment, or the Government of Canada.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 ATTRIBUTION = (
     "Source: Canadian Centre for Cyber Security (cyber.gc.ca). maplewatch is an unofficial tool, "

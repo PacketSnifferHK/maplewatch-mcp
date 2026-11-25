@@ -152,6 +152,16 @@ def build_server(
         version, partial name match, or wording the tool can't read). Confirm on the linked advisory.
         """
         items, problems = inventory()
+        if not items:
+            # Never an empty "all clear": nothing checked is not the same as nothing affected.
+            return _envelope(
+                src,
+                summary="Nothing was checked: maplewatch found no software to compare. This is NOT an all-clear.",
+                nothing_checked=True,
+                affected=[],
+                check=[],
+                inventory_problems=problems,
+            )
         since = (today() - dt.timedelta(days=days)).isoformat()
         window = [a for a in _advisories(lang) if a.published >= since]
         findings, ruled_out = check(items, window)
@@ -172,11 +182,31 @@ def build_server(
     return server
 
 
-def report(days: int = 365, lang: str = "en") -> str:
-    """Plain-text report for cron, n8n or a terminal demo: `maplewatch-mcp --report`."""
-    items, problems = load_inventory()
-    src = CyberCentre()
-    since = (dt.date.today() - dt.timedelta(days=days)).isoformat()
+# Exit codes for cron and n8n: 0 = nothing affected, 1 = something affected, 2 = nothing could be checked.
+EXIT_CLEAR, EXIT_AFFECTED, EXIT_NOTHING_CHECKED = 0, 1, 2
+
+
+def report(
+    days: int = 365,
+    lang: str = "en",
+    source: CyberCentre | None = None,
+    inventory: Callable[[], tuple[list[Software], list[str]]] = load_inventory,
+    today: Callable[[], dt.date] = dt.date.today,
+) -> tuple[str, int]:
+    """Plain-text report and exit code, for cron, n8n or a terminal demo: `maplewatch-mcp --report`."""
+    items, problems = inventory()
+    if not items:
+        lines = [
+            f"maplewatch {__version__}: NOTHING WAS CHECKED. No software was found, so this is not an all-clear.",
+            "",
+            *[f"problem: {p}" for p in problems],
+            "",
+            "Tell maplewatch what you run:",
+            "  MAPLEWATCH_STACK=stack.yaml, MAPLEWATCH_SBOM=bom.json or MAPLEWATCH_DOCKER=1",
+        ]
+        return "\n".join(lines), EXIT_NOTHING_CHECKED
+    src = source or CyberCentre()
+    since = (today() - dt.timedelta(days=days)).isoformat()
     window = [a for a in src.advisories(lang) if a.published >= since]
     findings, ruled_out = check(items, window)
     lines = [
@@ -184,6 +214,9 @@ def report(days: int = 365, lang: str = "en") -> str:
         f"{len(items)} pieces of software checked",
         "",
     ]
+    lines += [f"problem: {p}" for p in problems]  # e.g. Docker unreachable: shown first, not buried
+    if problems:
+        lines.append("")
     for f in findings:
         mark = "AFFECTED" if f.status == "affected" else "CHECK   "
         lines.append(
@@ -191,11 +224,12 @@ def report(days: int = 365, lang: str = "en") -> str:
             f"({f.product.name}) {f.reason}\n         {f.advisory.url}"
         )
     if not findings:
-        lines.append("Nothing in this window affects the software listed.")
+        lines.append(f"Nothing in this window affects the {len(items)} pieces of software checked.")
     lines += ["", f"{ruled_out} name matches ruled out by version."]
-    lines += [f"warning: {w}" for w in [*problems, *src.warnings]]
+    lines += [f"warning: {w}" for w in src.warnings]
     lines += ["", ATTRIBUTION]
-    return "\n".join(lines)
+    code = EXIT_AFFECTED if any(f.status == "affected" for f in findings) else EXIT_CLEAR
+    return "\n".join(lines), code
 
 
 def main() -> None:
@@ -211,10 +245,11 @@ def main() -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)  # don't log every request to stderr
     if args.report:
         try:
-            print(report(args.days, args.lang))
+            text, code = report(args.days, args.lang)
         except SourceError as exc:
             sys.exit(f"maplewatch: {exc}")
-        return
+        print(text)
+        sys.exit(code)
     server = build_server()
     if args.transport == "stdio":
         server.run()

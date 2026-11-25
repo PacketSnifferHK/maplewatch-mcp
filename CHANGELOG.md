@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.1 (2026-11-25)
+
+- Fixed: when no software could be found (for example Docker unreachable), `--report` printed
+  "Nothing in this window affects the software listed", which read like an all-clear. It now says
+  NOTHING WAS CHECKED and exits with code 2; the MCP tool returns `nothing_checked: true`.
+- `--report` exit codes for cron and n8n: 0 = nothing affected, 1 = something affected, 2 = nothing could be checked.
+- Inventory problems (such as an unreachable Docker) are shown at the top of the report, not buried at the end.
+
+## 0.1.0 (2026-11-25)
 
 First release.
 
